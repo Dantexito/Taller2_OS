@@ -1,49 +1,55 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <getopt.h> 
+#include "cpu.h"  // Include the CPU header
 
-void print_num_cpus() {
-    long num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-    if (num_cpus == -1) {
-        perror("Error obteniendo el numero de CPUs");
-        exit(EXIT_FAILURE);
-    }
-    printf("Nuamero de CPUs: %ld\n", num_cpus);
-}
+int main(int argc, char **argv) {
+  int aflag = 0;
+  int bflag = 0;
+  char *cvalue = NULL;
+  int c;
 
-int main(int argc, char *argv[]) {
-    int aflag = 0;
-    int bflag = 0;
-    char *cvalue = NULL;
-    int opt;
+  opterr = 0;
 
-    opterr = 0;
-
-    while ((opt = getopt(argc, argv, "ab:c")) != -1) {
-        switch (opt) {
-            case 'a':
-                aflag = 1;
-                break;
-            case 'b':
-                bflag = atoi(optarg);
-                break;
-            case 'c':
-                print_num_cpus();
-                break;
-            case '?':
-                fprintf(stderr, "Uso: %s -a -b <valor> -c\n", argv[0]);
-                return EXIT_FAILURE;
-            default:
-                abort();
+  // Add 'p' to the options string
+  while ((c = getopt(argc, argv, "ab:c:p")) != -1) {
+    switch (c) {
+      case 'a':
+        aflag = 1;
+        break;
+      case 'b':
+        bflag = atoi(optarg);
+        break;
+      case 'c':
+        cvalue = optarg;
+        break;
+      case 'p':
+        // Handle -p: Print CPU info and exit
+        if (get_cpu_info() != 0) {
+          exit(EXIT_FAILURE);
         }
+        exit(EXIT_SUCCESS);
+        break;
+      case '?':
+        if (optopt == 'c') {
+          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+        } else if (isprint(optopt)) {
+          fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+        } else {
+          fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+        }
+        return 1;
+      default:
+        abort();
     }
+  }
 
-    printf("aflag = %d, bflag = %d\n", aflag, bflag);
+  printf("aflag = %d, bflag = %d, cvalue = %s\n", aflag, bflag, cvalue);
 
-    for (int index = optind; index < argc; index++) {
-        printf("Argumento no-opci\u00f3n: %s\n", argv[index]);
-    }
+  for (int index = optind; index < argc; index++) {
+    printf("Non-option argument %s\n", argv[index]);
+  }
 
-    return 0;
+  return 0;
 }
