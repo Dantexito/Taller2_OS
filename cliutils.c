@@ -58,6 +58,10 @@ int main(int argc, char **argv) {
                 bool confirmed = false;
 
                 while (time(NULL) - start < 6) {
+                    int remaining = 6 - (time(NULL) - start);
+                    printf("\rTime remaining: %d seconds ", remaining);
+                    fflush(stdout);
+
                     if (interrupt_count > 0) {
                         waiting_confirmation = 1;
                         printf("\nInterrupt received. Exit? (y/n): ");
@@ -79,9 +83,16 @@ int main(int argc, char **argv) {
                         }
                         waiting_confirmation = 0;
                     }
-                    sleep(1);
+                    
+                    // Handle 1-second sleep with interrupt checking
+                    time_t before_sleep = time(NULL);
+                    while (time(NULL) - before_sleep < 1) {
+                        if (interrupt_count > 0) break;
+                        sleep(1);
+                    }
                 }
 
+                printf("\n");  // New line after countdown completes
                 if (get_cpu_info() != 0) {
                     exit(EXIT_FAILURE);
                 }
