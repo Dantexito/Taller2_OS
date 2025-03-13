@@ -8,8 +8,8 @@
 #include <string.h>
 #include "cpu.h"
 
-volatile sig_atomic_t interrupt_count = 0;
-volatile sig_atomic_t waiting_confirmation = 0;
+int interrupt_count = 0;
+int waiting_confirmation = 0;
 
 void handle_signal(int sig) {
     if (waiting_confirmation) {
@@ -17,14 +17,6 @@ void handle_signal(int sig) {
         exit(EXIT_SUCCESS);
     }
     interrupt_count++;
-}
-
-void restore_signal_handler() {
-    struct sigaction sa;
-    sa.sa_handler = handle_signal;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    sigaction(SIGINT, &sa, NULL);
 }
 
 int main(int argc, char **argv) {
@@ -77,7 +69,6 @@ int main(int argc, char **argv) {
                                 interrupt_count = 0;
                                 waiting_confirmation = 0;
                                 printf("Resuming...\n");
-                                restore_signal_handler();
                                 continue;
                             }
                         }
